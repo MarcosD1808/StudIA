@@ -1,7 +1,4 @@
 
-dist/
-build/
-coverage
 # Entornos locales
 backend/.env
 .env
