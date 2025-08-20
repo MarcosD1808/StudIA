@@ -2,7 +2,7 @@
 # Entornos locales
 backend/.env
 .env
-.env.*
+
 
 # Dependencias
 node_modules/
