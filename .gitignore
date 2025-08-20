@@ -1,8 +1,35 @@
+
+dist/
+build/
+coverage
+# Entornos locales
 backend/.env
 .env
 .env.*
+
+# Dependencias
+node_modules/
+bower_components/
+
+# Builds y distribuciones
 dist/
 build/
-coverage/
-.vscode/
+
+# Logs y debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Archivos de sistema
 .DS_Store
+Thumbs.db
+
+# IDEs / Editores
+.vscode/
+.idea/
+*.swp
+
+# Cobertura de tests
+coverage/
