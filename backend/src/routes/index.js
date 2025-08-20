@@ -1,24 +1,16 @@
-import { Router } from "express";
-import { pool } from "../db/pool.js";
+import { Router } from 'express';
+import pool from '../db/db.js';
 
-export const router = Router();
+const router = Router();
 
-router.get("/health", (_req, res) => {
-  res.json({ ok: true });
-});
-
-router.get("/env-check", (_req, res) => {
-  const hasDb = !!process.env.DATABASE_URL;
-  res.json({ envLoaded: true, hasDatabaseUrl: hasDb });
-});
-
-// versión simple para aislar conexión
-router.get("/db-check", async (_req, res) => {
+router.get('/db-check', async (_req, res) => {
+  const t0 = Date.now();
   try {
-    const { rows } = await pool.query("SELECT 1 AS ok");
-    res.json({ db: "ok", probe: rows[0].ok });
-  } catch (e) {
-    console.error("DB error:", e);
-    res.status(500).json({ error: "DB error", details: e.message });
+    await pool.query('SELECT 1');
+    res.json({ ok: true, data: { status: 'up', latencyMs: Date.now() - t0 } });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: { code: 'DB_UNAVAILABLE', detail: err.message } });
   }
 });
+
+export default router;
