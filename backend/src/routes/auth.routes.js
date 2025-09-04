@@ -1,7 +1,7 @@
 import { Router } from "express";
-import pool from "../db/db.js";
+import pool from "../db/pool.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { signToken } from "../services/jwt.services.js";  // 👈 usa servicio centralizado
 
 const router = Router();
 
@@ -17,15 +17,15 @@ router.get("/ping", (_req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({ ok: false, error: { code: "BAD_REQUEST", message: "email y password son requeridos" } });
+    return res.status(400).json({
+      ok: false,
+      error: { code: "BAD_REQUEST", message: "email y password son requeridos" },
+    });
   }
 
   try {
-    // Ajustá el nombre de la tabla/columnas si tu esquema difiere
     const { rows } = await pool.query(
-      `SELECT id, email, name, password_hash
+      `SELECT id, email, name, role, password_hash
        FROM users
        WHERE email = $1
        LIMIT 1`,
@@ -34,31 +34,36 @@ router.post("/login", async (req, res) => {
 
     const user = rows[0];
     if (!user) {
-      return res
-        .status(401)
-        .json({ ok: false, error: { code: "INVALID_CREDENTIALS", message: "Credenciales inválidas" } });
+      return res.status(401).json({
+        ok: false,
+        error: { code: "INVALID_CREDENTIALS", message: "Credenciales inválidas" },
+      });
     }
 
     const okPass = await bcrypt.compare(password, user.password_hash || "");
     if (!okPass) {
-      return res
-        .status(401)
-        .json({ ok: false, error: { code: "INVALID_CREDENTIALS", message: "Credenciales inválidas" } });
+      return res.status(401).json({
+        ok: false,
+        error: { code: "INVALID_CREDENTIALS", message: "Credenciales inválidas" },
+      });
     }
 
-    const token = jwt.sign(
-      { sub: user.id, email: user.email },
-      process.env.JWT_SECRET || "dev_secret_change_me",
-      { expiresIn: "2h" }
-    );
+    // Firmar JWT con datos mínimos
+    const token = signToken({ sub: user.id, email: user.email, role: user.role });
 
     return res.json({
       ok: true,
-      data: { token, user: { id: user.id, email: user.email, name: user.name } },
+      data: {
+        token,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+      },
     });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    return res.status(500).json({ ok: false, error: { code: "SERVER_ERROR", message: "Error interno" } });
+    return res.status(500).json({
+      ok: false,
+      error: { code: "SERVER_ERROR", message: "Error interno" },
+    });
   }
 });
 
